@@ -1,0 +1,143 @@
+\section{Experiments}
+\label{sec:experiments}
+
+We ask whether adaptation cost varies systematically across regions and shifts (\S\ref{sec:exp-spectrum}), whether the diagnostic predicts it (\S\ref{sec:exp-diagnostic}), whether the allocation converts prediction into task success (\S\ref{sec:exp-allocation}--\S\ref{sec:exp-ablations}), and how it fares on hardware (\S\ref{sec:exp-physical}).
+
+\input{figures/fig-cka-table}
+
+%----------------------------------------------------------------------
+\subsection{Setup}
+\label{sec:exp-setup}
+
+\paragraph{Architectures and benchmarks}
+We evaluate the five VLA architectures of Table~\ref{tab:region-partitions}, which span three action-decoding paradigms and two orders of magnitude in parameter count.
+LIBERO~\cite{Liu2023LIBERO} is the primary benchmark ($40$ manipulation tasks across four suites), and CALVIN~\cite{Mees2022CALVIN} the secondary, which tests transfer to a different task distribution.
+Within each benchmark we construct five controlled deployment shifts that each modify a single axis of the observation distribution (Table~\ref{tab:shift-construction}).
+
+\input{tables/tab-shift-construction}
+
+\paragraph{Baselines}
+We compare against eleven baselines in three families and refer to the allocation the pipeline produces as \emph{Adaptive}.
+\emph{No Adaptation} (the frozen pretrained policy) is the floor.
+\emph{Full Fine-Tuning}, \emph{Uniform LoRA} at rank~$32$, and \emph{Oracle Allocation} (the allocator driven by the measured $\rho(r)$ instead of the diagnostic) are nominal upper bounds.
+\emph{Uniform LoRA matched}, \emph{DoRA matched}~\cite{Liu2024DoRA}, \emph{$(IA)^3$}~\cite{Liu2022FewShot}, \emph{AdaLoRA}~\cite{Zhang2023AdaLoRA}, \emph{LoRA-SP}~\cite{Kim2026LoRASP}, \emph{Surgical} (the full matched budget on the spectrum's dominant region, an oracle-informed variant of surgical fine-tuning~\cite{Lee2023Surgical}), and \emph{Random Allocation} compete at a matched trainable-parameter budget.
+% SPT's per-parameter sensitivity maps do not fit in memory at the $7$B scale and RSRA had no released implementation at submission time, so Surgical stands in for the pre-hoc principle.
+
+\paragraph{Protocol and statistics}
+We collect $M = 20$ demonstrations per task in the target environment and give the diagnostic $N = 10$ unlabeled observations.
+All methods train for $50$ epochs with BFloat16 precision, cosine learning-rate decay, gradient clipping, and AdamW, with 8-bit optimizer states and gradient checkpointing for Full Fine-Tuning of the two largest models.
+We evaluate every method at its best validation checkpoint, which we select by action-prediction loss on held-out demonstrations, so we score no method in its overfitting tail.
+We run $5$ seeds per condition and $50$ rollouts per task and report mean $\pm$ standard error of the mean (SEM).
+We compare methods with paired t-tests, paired by task, with Bonferroni correction across architectures, and we report all conditions, including those where the pipeline ties with or trails a baseline.
+We set the cache constants to $K = 300$, $N_\text{pool} = 5{,}000$, $B = 200$--$500$ (by architecture), and $k_F = 100$, the diagnostic constants to $N_0 = 10$, $\sigma = 0.05$, $p = 0.1$, $T = 20$, and $\alpha = 0.5$ for dropout-trained models, and we calibrate the gate temperature $\gamma = 1$, the freezing threshold $\delta = 0.1$, and the rank-per-score gain $\beta = 32$ once on source-side scenarios from the LIBERO training split; we hold every value fixed across all architectures, shifts, benchmarks, and physical experiments, so no target-domain information enters hyperparameter selection.
+We tune learning rates per method family (full fine-tuning, the LoRA family, and $(IA)^3$) on the same scenarios, since a shared learning rate would disadvantage full fine-tuning relative to LoRA.
+
+%----------------------------------------------------------------------
+\subsection{The Adaptation Spectrum}
+\label{sec:exp-spectrum}
+
+This experiment measures $\rho(r)$ of Eq.~\ref{eq:adaptation-cost} by exhaustive region-isolated fine-tuning (\S\ref{sec:problem}) for every (architecture, shift, seed) condition on both benchmarks, and provides the reference signal for evaluating the diagnostic.
+Region-isolated fine-tuning can inflate $\rho(r)$ for high-capacity regions that compensate for errors arising elsewhere, and displacement depends on the optimization protocol as well as on necessity.
+Two checks support $\rho(r)$ as an allocation target despite this caveat.
+Oracle Allocation (\S\ref{sec:exp-allocation}), which converts $\rho(r)$ directly into ranks, approaches the full fine-tuning bound, and per-region success recovery on the same runs correlates with $\rho(r)$ at a median per-cell Spearman of $\rho_S = 0.87$.
+
+\input{figures/fig-spectrum-heatmaps}
+
+Fig.~\ref{fig:spectrum-heatmaps} shows the spectrum on LIBERO.
+First, $\rho(r)$ varies by roughly an order of magnitude across regions within a single (architecture, shift) cell, so uniform allocation necessarily overprovisions some regions and underprovisions others.
+Second, the dominant region for each shift type is consistent across all five architectures, with appearance shifts loading the vision encoders, instruction shifts the language backbone, and novel-object shifts the vision encoder together with the action head.
+The novel-object shift substitutes geometry as well as material and color (Table~\ref{tab:shift-construction}), so recovery requires re-binding perception to new grasp geometry, and the physical shift shows the same signature (\S\ref{sec:exp-physical}).
+Third, CALVIN identifies the same dominant region as LIBERO in all $25$ (architecture, shift) cells, with a mean per-cell Spearman of $\rho_S = 0.93$ between the two cost profiles, which suggests the spectrum reflects the architecture--shift interaction rather than a benchmark artifact.
+The spectrum is a descriptive finding for the architectures and benchmarks studied here, and we do not claim it extends beyond them.
+
+%----------------------------------------------------------------------
+\subsection{Diagnostic Accuracy}
+\label{sec:exp-diagnostic}
+
+This experiment evaluates whether the diagnostic predicts $\rho(r)$ from $N = 10$ unlabeled observations without fine-tuning.
+We report two complementary statistics.
+The pooled $R^2$ of predicted scores $\{D(r)\}$ against measured costs $\{\rho(r)\}$ across all $210$ conditions summarizes the fit in Fig.~\ref{fig:diagnostic-scatter-facets}, but it inherits between-region variance, since vision encoders score high and language backbones low across most deployments, and therefore overstates within-deployment discrimination.
+The median per-cell Spearman $\rho_S$ over each (architecture, shift, benchmark, seed) cell's regions measures the within-deployment ordering the allocator consumes, though a correlation over $3$--$6$ regions is individually coarse.
+We read the two jointly.
+The CKA matrices of Fig.~\ref{fig:cka-table} show the raw Tier~1 signal, with each shift darkening the blocks whose regions require adaptation.
+
+\input{tables/tab-diagnostic-aggregate}
+\input{figures/fig-diagnostic-scatter-facets}
+
+Table~\ref{tab:diagnostic-aggregate} and Fig.~\ref{fig:diagnostic-scatter-facets} support three conclusions.
+First, na{\"i}ve distributional measures (Frobenius norm, cosine distance) fall far short of either tier.
+Second, neither tier alone matches the gated blend, and the ordering holds within every architecture (bracketed ranges in Table~\ref{tab:diagnostic-aggregate}).
+Third, the uniform $0.5$ blend trails the gated blend on every architecture.
+% On OpenVLA-OFT, $R^2$ rises from $0.47$ at $N = 1$ to $0.93$ at $N = 10$ and only $0.94$ at $N = 20$, which supports $N = 10$ as the operating point.
+
+%----------------------------------------------------------------------
+\subsection{Adaptive Allocation Performance}
+\label{sec:exp-allocation}
+
+This experiment asks whether the allocation converts prediction accuracy into task success at reduced parameter cost.
+
+\input{tables/tab-allocation-consolidated}
+
+Table~\ref{tab:allocation-consolidated} reports success rates on the LIBERO combined-shift environment for all five architectures, and Fig.~\ref{fig:pareto-facets} traces the parameter--success frontier under each of the five shift types.
+Four observations follow.
+First, at the matched budget, Adaptive outperforms every matched-budget baseline on every architecture in our experiments, with significance against both Uniform LoRA matched and AdaLoRA in all five columns.
+Second, Adaptive reaches the nominal upper bounds at half their parameters, exceeding the mean of Uniform LoRA at rank~$32$ on all five architectures and matching Oracle Allocation within the SEMs on all five.
+We attribute the crossings to constrained-adaptation regularization.
+Full Fine-Tuning and Uniform LoRA at rank~$32$ reach near-zero training loss within $3$ epochs while held-out validation loss rises from epoch $4$, whereas Adaptive's validation loss decreases monotonically.
+Because we score every method at its best validation checkpoint (\S\ref{sec:exp-setup}), the crossings are not an artifact of overfit final checkpoints.
+Even at its best checkpoint, full fine-tuning of $7.5$B parameters on $20$ demonstrations generalizes worse at rollout time than constrained adaptation.
+Third, the advantage concentrates at low budgets (Fig.~\ref{fig:pareto-facets}), and we do not claim superiority at every budget.
+Fourth, Random Allocation collapses at the same budget, so the gains come from where the diagnostic places capacity rather than from non-uniformity per se, and Surgical, which spends the whole budget on the dominant region, trails even Uniform LoRA matched under the combined shift, so graded assignment rather than dominant-region selection drives the gains.
+The ordering transfers to CALVIN on all five architectures (Table~\ref{tab:allocation-calvin}).
+
+\input{tables/tab-allocation-calvin}
+
+\input{figures/fig-pareto-facets}
+
+%----------------------------------------------------------------------
+% \subsection{Continual Adaptation}
+% \label{sec:exp-continual}
+
+% This experiment applies the pipeline sequentially across the CALVIN A~$\to$~B~$\to$~C~$\to$~D environments (\S\ref{sec:method-adapt}) and measures retention on environment~A after the full sequence.
+
+% \input{tables/tab-continual-openvla}
+
+% Full Fine-Tuning and Uniform LoRA forget catastrophically on OpenVLA-OFT, losing $45$ and $35$ points on environment~A (Table~\ref{tab:continual-openvla}).
+% Selective freezing cuts forgetting to $6.8$ points while achieving the best average success across all four environments, and it exceeds EWC and LwF on both retention and average success.
+% Progressive Networks forgets least by construction but grows its parameter count fourfold over the sequence and trails on average success.
+% The same ordering holds on the other four architectures, with Adaptive forgetting $5.9$--$8.4$ points against $38$--$47$ for Full Fine-Tuning.
+
+%----------------------------------------------------------------------
+\subsection{Ablation Study}
+\label{sec:exp-ablations}
+
+Table~\ref{tab:ablations-compact} ablates one design choice at a time.
+On the allocation side, the freezing threshold $\delta = 0.1$ matches no freezing at the same budget and beats aggressive freezing; the value of freezing lies in budget rather than single-shift success, since frozen regions carry no adapter, which is what yields the $3.1$M language budget and the training-time parity with Uniform LoRA matched in Table~\ref{tab:physical-master}.
+Replacing the diagnostic-driven assignment with equal or random ranks at the same budget costs $12$ and $31$ points of success, which supports the claim that placement, not budget, drives the gains.
+Varying the gate temperature over two orders of magnitude, $\gamma \in [0.1, 10]$, changes success by less than one point, so the gate needs only coarse calibration.
+
+\input{tables/tab-ablations-compact}
+
+%----------------------------------------------------------------------
+\subsection{Physical Robot Evaluation}
+\label{sec:exp-physical}
+
+We evaluate the pipeline on a UFactory xArm-7 manipulator with a parallel-jaw gripper, OpenVLA-OFT as the base policy, one fixed third-person RGB camera viewing the workspace at a downward tilt, and one wrist-mounted RGB camera.
+For each of six controlled shifts we collect $20$ examples under the shifted condition, fine-tune each method for $10$ epochs on one NVIDIA A100 80GB, and evaluate every method at the shared epoch-$10$ checkpoint on $30$ paired initial configurations held identical across methods; the shared checkpoint avoids per-method checkpoint selection on the small physical validation sets, and the pairing supports McNemar's tests on discordant outcomes.
+For each shift we additionally evaluate a held-out Scene~B \emph{without} retraining.
+Fig.~\ref{fig:physical-scenes} shows the shifts and Table~\ref{tab:physical-master} reports all results.
+The diagnostic selects the budget per shift, spanning $32\times$ from $3.1$M for language to $100$M for mixed, and funds the DINOv2 and SigLIP encoders under appearance, SigLIP together with the action head under novel object and affordance, and rank-$3$ adapters on the late LLaMA region under language, whose per-rank cost sets the $3.1$M budget.
+The diagnostic runs in roughly $90$ seconds on the same A100 for the $7$B model, against $20$ minutes of adapter training.
+
+\input{figures/fig-physical-scenes}
+\input{tables/tab-physical-master}
+
+The language shift is the sharpest case.
+At the $3.1$M budget, Uniform LoRA matched reaches $7/30$ against a No Adaptation floor of $5/30$, while Adaptive reaches $21/30$, statistically indistinguishable from Full Fine-Tuning at $0.04\%$ of its trainable parameters; AdaLoRA needs $45$M to reach $19/30$, and LoRA-SP reaches $15/30$ at $3.1$M, so non-uniform placement is what survives the tight budget and pre-hoc diagnosis extends the margin.
+On every Scene B, Full Fine-Tuning collapses after adapting to Scene A while Adaptive keeps 11--23 of 30, margins of 5--14 successes that are significant under McNemar's test.
+Every PEFT baseline also generalizes to Scene~B far better than Full Fine-Tuning, and Adaptive's margins over the strongest PEFT baseline, $2$--$5$ successes on Scene~A and $2$--$6$ on Scene~B, are not individually significant at $n = 30$.
+Held-out-scene generalization is therefore a property of constrained adaptation broadly, and what distinguishes Adaptive is delivering it at equal or smaller budgets ($3.1$--$100$M against AdaLoRA's $45$--$105$M) while remaining numerically best on every Scene-B column and on five of six Scene-A columns.
+The regularization behind the simulation crossings appears here too, as Adaptive exceeds Full Fine-Tuning on four of six Scene-A columns; full fine-tuning of $7.5$B parameters on $20$ examples overfits even in domain, and the Scene-B collapse is the strong form of the same failure.
+On the affordance shift, No Adaptation returns $0/30$ on every column, so reported successes reflect part-grounded grasps, and Adaptive leads the best baseline by three successes on both scenes.
+The physical spatial shift occludes the target itself, and its diagnostic profile spreads across mid-to-late vision rather than concentrating, unlike the simulated spatial shift, whose clutter leaves the target visible and loads trajectory adjustment in the action head; accordingly, no allocation strategy separates from the others, with Adaptive at $16/30$ against AdaLoRA's $19/30$ (not significant) while using $43\%$ of AdaLoRA's parameters.
+We report this as the boundary of the claim, as the diagnostic helps when the importance signal concentrates and we detect no significant difference among allocation strategies otherwise.

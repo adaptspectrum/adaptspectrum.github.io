@@ -1,0 +1,30 @@
+\newcommand{\pcell}[1]{\includegraphics[width=\linewidth]{images/pareto_cells/#1}}
+\newcommand{\pW}{0.185\textwidth}
+\newcommand{\parch}[2]{\begin{minipage}[c]{0.06\textwidth}\centering\textbf{\scriptsize #1}\\{\tiny (#2)}\end{minipage}}
+\newcommand{\pshifthd}[1]{\begin{minipage}[c]{\pW}\centering\textbf{\footnotesize #1}\end{minipage}}
+\newcommand{\pcellbox}[1]{\begin{minipage}[c]{\pW}\centering\pcell{#1}\end{minipage}}
+
+\begin{figure*}[tp]
+    \setlength{\abovecaptionskip}{2pt}
+    \setlength{\belowcaptionskip}{-8pt}
+    \centering
+    \resizebox{0.87\textwidth}{!}{\begin{minipage}{\textwidth}
+    \centering
+    \setlength{\tabcolsep}{0.5pt}
+    \renewcommand{\arraystretch}{0.85}
+    \begin{tabular}{cccccc}
+        & \pshifthd{Appearance} & \pshifthd{Spatial} & \pshifthd{Novel Object} & \pshifthd{Instruction} & \pshifthd{Combined} \\[-1pt]
+        \parch{OpenVLA-OFT}{7B} &
+        \pcellbox{cell_openvla_appearance.pdf} & \pcellbox{cell_openvla_spatial.pdf} &
+        \pcellbox{cell_openvla_novel.pdf} & \pcellbox{cell_openvla_instruction.pdf} &
+        \pcellbox{cell_openvla_combined.pdf} \\[-2pt]
+        \parch{$\pi_0$}{3.3B} &
+        \pcellbox{cell_pi0_appearance.pdf} & \pcellbox{cell_pi0_spatial.pdf} &
+        \pcellbox{cell_pi0_novel.pdf} & \pcellbox{cell_pi0_instruction.pdf} &
+        \pcellbox{cell_pi0_combined.pdf} \\
+    \end{tabular}\\[1pt]
+    \includegraphics[width=0.9\textwidth]{images/pareto_cells/pareto_legend.pdf}
+    \end{minipage}}
+    \caption{Parameter--performance frontiers on LIBERO for OpenVLA-OFT and $\pi_0$ under the five deployment shifts, sweeping Adaptive, Uniform LoRA, AdaLoRA, DoRA, and LoRA-SP over nine budgets from one sixteenth of the matched budget to the full model size; the remaining three architectures appear in the accompanying video. Dashed lines mark the No Adaptation floor and Full Fine-Tuning ceiling. The Adaptive advantage is largest at low budgets and narrows as capacity approaches rank~$32$.}
+    \label{fig:pareto-facets}
+\end{figure*}

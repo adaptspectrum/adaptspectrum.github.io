@@ -1,0 +1,77 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%2345678901234567890123456789012345678901234567890123456789012345678901234567890
+%        1         2         3         4         5         6         7         8
+
+\documentclass[letterpaper, 10 pt, conference]{ieeeconf}  % Comment this line out if you need a4paper
+
+%\documentclass[a4paper, 10pt, conference]{ieeeconf}      % Use this line for a4 paper
+
+\IEEEoverridecommandlockouts                              % This command is only needed if
+                                                          % you want to use the \thanks command
+
+\overrideIEEEmargins                                      % Needed to meet printer requirements.
+
+\input{preamble}
+
+\title{\LARGE \bf
+Not All Layers Need Tuning: Diagnosing and Directing Adaptation in Vision-Language-Action Models
+}
+
+% =============================================================================
+% ICRA 2027 uses double-anonymous review: the initial submission must not list
+% authors or affiliations. Uncomment the author block below ONLY for the
+% camera-ready version.
+% =============================================================================
+% \author{
+%     \textbf{Shahram Najam Syed}\textsuperscript{1},
+%     \textbf{Arthur Jakobsson}\textsuperscript{1},
+%     \textbf{Prayuj Sachdev}\textsuperscript{2},  % prayujs@andrew.cmu.edu
+%     \textbf{Jeffrey Ichnowski}\textsuperscript{1} \\
+%     \textsuperscript{1}Robotics Institute, Carnegie Mellon University, Pittsburgh, USA \\
+%     \textsuperscript{2}Department of Electrical and Computer Engineering, Carnegie Mellon University, Pittsburgh, USA
+% }
+
+% =============================================================================
+% Compliant spacing tightening. Only internal skips are reduced; margins,
+% font sizes, page geometry, and the 10pt ieeeconf class are untouched,
+% which is what ICRA format checks validate.
+% =============================================================================
+\setlength{\textfloatsep}{10pt plus 2pt minus 4pt}% default ~20pt
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}%
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}%
+\setlength{\abovecaptionskip}{5pt}%
+\setlength{\belowcaptionskip}{0pt}%
+\makeatletter
+\g@addto@macro\normalsize{%
+  \setlength\abovedisplayskip{5pt plus 2pt minus 2pt}%
+  \setlength\belowdisplayskip{5pt plus 2pt minus 2pt}%
+  \setlength\abovedisplayshortskip{3pt}%
+  \setlength\belowdisplayshortskip{3pt}%
+}
+\makeatother
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+\pagestyle{empty}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{abstract}%
+\input{abstract}
+\end{abstract}
+
+%===============================================================================
+\input{section-1-introduction}
+\input{section-2-related-work}
+\input{section-3-problem}
+\input{section-4-method}
+\input{section-5-experiments}
+\input{section-6-conclusion}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

@@ -1,0 +1,29 @@
+\begin{table}[tbp]
+    \centering
+    \setlength{\abovecaptionskip}{0pt}
+    \setlength{\belowcaptionskip}{-9pt}
+    \caption{Physical results on the xArm-7 with OpenVLA-OFT, successes out of $30$ paired rollouts at epoch~$10$ with identical initial configurations across methods (paired McNemar's tests). We evaluate Scene~B without retraining. \emph{Budget} is the per-shift budget the diagnostic selects, which the matched baselines and LoRA-SP share. AdaLoRA runs at its own allocation ($45$--$105$M), Uniform LoRA $r{=}32$ at $110$M (the hardware recipe adapts every linear layer, not only attention projections), and Full Fine-Tuning updates all $7.5$B parameters. Bold marks the best parameter-efficient result per column; shading runs red (worst) to green (best) within each column.}
+    \label{tab:physical-master}
+    \renewcommand{\arraystretch}{1.05}
+    \setlength{\tabcolsep}{2.0pt}
+    \resizebox{\columnwidth}{!}{%
+    \begin{tabular}{@{}lccccccccccccc@{}}
+        \toprule
+        & \multicolumn{2}{c}{\textbf{Appearance}} & \textbf{Spatial} & \multicolumn{2}{c}{\textbf{Novel Obj.}} & \multicolumn{2}{c}{\textbf{Language}} & \multicolumn{2}{c}{\textbf{Affordance}} & \multicolumn{2}{c}{\textbf{Mixed}} & \\
+        \cmidrule(lr){2-3} \cmidrule(lr){4-4} \cmidrule(lr){5-6} \cmidrule(lr){7-8} \cmidrule(lr){9-10} \cmidrule(lr){11-12}
+        \textbf{Method} & A & B & A & A & B & A & B & A & B & A & B & \textbf{Wall$~\downarrow$} \\
+        \midrule
+        Budget (selected)      & \multicolumn{2}{c}{$37$M} & $32$M & \multicolumn{2}{c}{$60$M} & \multicolumn{2}{c}{$3.1$M} & \multicolumn{2}{c}{$60$M} & \multicolumn{2}{c}{$100$M} & \\
+        \midrule
+        No Adaptation          & \cl{0}5/30   & \cl{0}1/30   & \cl{0}4/30   & \cl{0}5/30   & \cl{0}2/30   & \cl{0}5/30   & \cl{40}4/30  & \cl{0}0/30   & \cl{0}0/30   & \cl{0}7/30   & \cl{0}3/30   & ---    \\
+        Full Fine-Tuning       & \ch{82}25/30 & \cl{72}9/30  & \ch{100}19/30 & \ch{80}24/30 & \cl{64}8/30  & \ch{100}22/30 & \ch{34}11/30 & \ch{70}11/30 & \cl{36}2/30  & \ch{88}24/30 & \cl{70}9/30  & \cl{0}55 \\
+        Uniform LoRA $r{=}32$  & \ch{54}22/30 & \ch{36}16/30 & \ch{74}17/30 & \ch{42}20/30 & \ch{26}14/30 & \ch{52}18/30 & \ch{60}13/30 & \ch{38}9/30  & \cl{90}5/30  & \ch{66}22/30 & \ch{6}12/30  & \ch{88}22 \\
+        Uniform LoRA matched   & \ch{36}20/30 & \ch{28}15/30 & \ch{46}15/30 & \ch{52}21/30 & \ch{36}15/30 & \cl{24}7/30  & \cl{0}1/30   & \ch{38}9/30  & \cl{90}5/30  & \ch{56}21/30 & \ch{6}12/30  & \ch{100}\textbf{20} \\
+        DoRA matched           & \ch{46}21/30 & \ch{36}16/30 & \ch{74}17/30 & \ch{62}22/30 & \ch{48}16/30 & \cl{36}8/30  & \cl{26}3/30  & \ch{54}10/30 & \ch{10}6/30  & \ch{66}22/30 & \ch{18}13/30 & \ch{78}24 \\
+        AdaLoRA                & \ch{54}22/30 & \ch{46}17/30 & \ch{100}\textbf{19/30} & \ch{62}22/30 & \ch{48}16/30 & \ch{64}19/30 & \ch{74}14/30 & \ch{54}10/30 & \ch{10}6/30 & \ch{78}23/30 & \ch{30}14/30 & \ch{72}25 \\
+        LoRA-SP                & \ch{28}19/30 & \ch{54}18/30 & \cl{94}11/30 & \ch{62}22/30 & \ch{26}14/30 & \ch{18}15/30 & \ch{60}13/30 & \ch{38}9/30  & \ch{46}8/30  & \ch{34}19/30 & \ch{6}12/30  & \ch{66}26 \\
+        \midrule
+        \textbf{Adaptive}      & \ch{100}\textbf{27/30} & \ch{100}\textbf{23/30} & \ch{60}16/30 & \ch{100}\textbf{26/30} & \ch{100}\textbf{21/30} & \ch{88}\textbf{21/30} & \ch{100}\textbf{16/30} & \ch{100}\textbf{13/30} & \ch{100}\textbf{11/30} & \ch{100}\textbf{25/30} & \ch{100}\textbf{20/30} & \ch{100}\textbf{20} \\
+        \bottomrule
+    \end{tabular}}
+\end{table}

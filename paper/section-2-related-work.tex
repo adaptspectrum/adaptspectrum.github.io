@@ -1,0 +1,19 @@
+\section{Related Work}
+\label{sec:related-work}
+
+\textbf{VLA adaptation.}
+VLA models pair pretrained vision-language backbones with autoregressive~\cite{Brohan2023RT1, Kim2024OpenVLA, Kim2025OpenVLAOFT}, diffusion~\cite{OctoModelTeam2024, Hou2024DTP}, or flow-matching~\cite{Black2024Pi0, Shukor2025SmolVLA} action decoders, and current practice adapts them with one global LoRA rank across all layers~\cite{Kim2024OpenVLA, Kim2025OpenVLAOFT}.
+Building on this parameterization, the pipeline keeps LoRA as the adapter, whose low-rank form suits the low intrinsic dimensionality of fine-tuning~\cite{Aghajanyan2021Intrinsic}, and replaces the single global rank with a per-region allocation.
+A study of LoRA for $\pi_0$~\cite{Ferchau2026VLALoRA} reports that uniform allocation suffices at rank~32; our results (\S\ref{sec:exp-allocation}) agree at that budget and diverge below it, where the adaptive advantage concentrates.
+LoRA also forgets less than full fine-tuning~\cite{Biderman2024LoRALearnsLess}, a regularization we observe on hardware (\S\ref{sec:exp-physical}).
+
+\textbf{Non-uniform rank allocation.}
+AdaLoRA~\cite{Zhang2023AdaLoRA} prunes singular values, ARD-LoRA~\cite{ARDLoRA2025} learns per-head rank schedules, and LoRA-SP~\cite{Kim2026LoRASP} gates singular value decomposition (SVD) update directions, all during training.
+In contrast to these methods, which require a full optimization run to find the allocation, the pipeline fixes ranks before training from unlabeled observations, and we compare against AdaLoRA and LoRA-SP at matched budgets (\S\ref{sec:exp-allocation}).
+Building on surgical fine-tuning~\cite{Lee2023Surgical}, which showed in vision models that the shift type determines which layers benefit from tuning, and on SPT~\cite{He2023SPT} and RSRA~\cite{Liu2026RSRA}, which assign capacity before training from gradient or representation sensitivity, the pipeline extends pre-hoc, shift-aware selection from single-modality models to multi-module VLAs, replaces the labeled calibration data of the gradient-based instances with unlabeled observations, and evaluates the allocation on physical hardware.
+
+\textbf{Representational and uncertainty measures.}
+The diagnostic scores source-target alignment with Centered Kernel Alignment (CKA)~\cite{Kornblith2019CKA}, gates its tiers with the Fr\'{e}chet distance~\cite{Dowson1982Frechet}, and estimates uncertainty with Monte Carlo (MC) Dropout~\cite{Gal2016MCDropout}.
+Its Fisher weighting is stored compactly with Kronecker-factored approximate curvature (KFAC)~\cite{Martens2015KFAC}.
+The contribution lies in combining these measures and applying them before adaptation.
+VLA-Trace~\cite{Shi2026VLATrace} also applies CKA to VLA representations; in contrast to its post-hoc analysis of fine-tuned models, the diagnostic runs before adaptation and drives a capacity allocation.

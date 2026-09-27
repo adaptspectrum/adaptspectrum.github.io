@@ -1,0 +1,13 @@
+\section{Conclusion}
+\label{sec:conclusion}
+This paper asked whether adaptation cost in VLA models is structured enough to measure before fine-tuning begins.
+Across five architectures and five deployment shifts, the adaptation spectrum supports an affirmative answer, with each shift type concentrating cost in a characteristic functional region regardless of parameter scale or action-decoding paradigm in our experiments.
+The diagnostic recovers this structure from ten unlabeled target observations without fine-tuning, ranking regions within each deployment at a median Spearman of $0.91$, and the allocator converts the prediction into variable-rank adapters that match or exceed uniform LoRA at every budget we tested.
+On the physical xArm-7, the selected budgets track shift severity across a $32\times$ range, and constrained adaptation preserves held-out-scene generalization that full fine-tuning loses.
+
+\textbf{Limitations and Future Work.}
+The source-side Fisher can misestimate target sensitivity when the domain gap is large (the regime the gate routes to Tier~2), and the measured $\rho(r)$ depends on the fine-tuning protocol (\S\ref{sec:exp-spectrum}).
+Hyperparameters calibrated once on LIBERO transferred unchanged to CALVIN and to the xArm-7, though we have not tested them beyond these settings, and the hardware evaluation covers one architecture and one embodiment.
+The adapt stage still requires roughly $20$ labeled demonstrations, so ``unlabeled'' describes diagnosis, not adaptation.
+The spatial-occlusion result marks where the pipeline stops helping, when the importance signal spreads rather than concentrates.
+Finally, the pipeline extends naturally to repeated shifts, by re-running the diagnostic on the adapted model and attaching fresh adapters only where scores are high, and we leave evaluation of this continual setting to future work.

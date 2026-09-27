@@ -1,0 +1,23 @@
+\begin{table}[tbp]
+    \centering
+    \setlength{\abovecaptionskip}{0pt}
+    \setlength{\belowcaptionskip}{2pt}
+    \caption{Continual adaptation on CALVIN A~$\to$~B~$\to$~C~$\to$~D for OpenVLA-OFT, mean $\pm$ SEM over $5$ seeds. \emph{Initial} is success on environment~A right after adapting to it, \emph{Final} after the full sequence, \emph{Forgetting} their difference, and \emph{Avg} the end-of-sequence mean over all four environments. Bold marks the best result per column, and $\ast$ marks a result significantly better than every other method at $p<0.01$ (paired t-test, Bonferroni-corrected).}
+    \label{tab:continual-openvla}
+    \scriptsize
+    \renewcommand{\arraystretch}{0.92}
+    \setlength{\tabcolsep}{3.5pt}
+    \begin{tabular}{@{}lcccc@{}}
+        \toprule
+        \textbf{Method} & \textbf{Initial} & \textbf{Final} & \textbf{Forget.~$\downarrow$} & \textbf{Avg~$\uparrow$} \\
+        \midrule
+        Full Fine-Tuning            & \textbf{73.2$\pm$1.2} & 27.8$\pm$8.7 & 45.4$\pm$8.4 & 38.2$\pm$6.1 \\
+        Uniform LoRA (r=32)                & 67.1$\pm$2.5 & 32.5$\pm$5.9 & 34.6$\pm$6.2 & 47.2$\pm$3.4 \\
+        EWC~\cite{Kirkpatrick2017EWC} & 64.4$\pm$2.1 & 48.9$\pm$3.4 & 15.5$\pm$2.9 & 56.3$\pm$2.3 \\
+        Progressive Networks~\cite{Rusu2016Progressive} & 65.8$\pm$1.8 & 65.6$\pm$2.0 & \textbf{0.2$\pm$0.5} & 64.8$\pm$2.1 \\
+        LwF~\cite{LiHoiem2017LwF}   & 63.5$\pm$2.4 & 45.7$\pm$3.8 & 17.8$\pm$3.5 & 54.6$\pm$2.8 \\
+        \midrule
+        \textbf{Adaptive}           & 70.5$\pm$1.4 & \textbf{63.7$\pm$2.0} & 6.8$\pm$1.6 & \textbf{66.4$\pm$1.5}$^{\ast}$ \\
+        \bottomrule
+    \end{tabular}
+\end{table}

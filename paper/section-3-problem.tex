@@ -1,0 +1,38 @@
+\section{Problem Statement}
+\label{sec:problem}
+
+Consider a pretrained VLA, $\pi_\theta$, that maps an observation $o \in \mathcal{O}$ (RGB images and, in some architectures, proprioceptive state) and a language instruction $\ell \in \mathcal{L}$ to an action or action chunk $a \in \mathcal{A} \subseteq \mathbb{R}^d$.
+The parameters $\theta \in \mathbb{R}^P$, with $P$ the total parameter count, partition into $R$ disjoint, exhaustive \emph{network regions} $\theta = (\theta^{(1)}, \dots, \theta^{(R)})$ with $\theta^{(r)} \in \mathbb{R}^{P_r}$ and $\sum_{r=1}^{R} P_r = P$, each a functional component (e.g., vision encoder, language backbone, cross-modal projector, action head) whose boundaries the architecture fixes.
+
+\paragraph{Inputs and goal}
+Let $\mathcal{D}_\text{tgt}$ denote a target deployment distribution that differs from the pretraining source distribution $\mathcal{D}_\text{src}$ in visual appearance, spatial layout, object geometry, language phrasing, or a combination of these.
+Given $N$ unlabeled target observations $\mathcal{T}_\text{diag} = \{(o_j, \ell_j)\}_{j=1}^{N}$, a demonstration set $\mathcal{T} = \{(o_i, \ell_i, a_i)\}_{i=1}^{M}$ from $\mathcal{D}_\text{tgt}$ with $N < M$, and a trainable-parameter budget $P_\text{budget}$, the goal is to adapt $\pi_\theta$ into a policy $\pi_{\theta'}$ that maximizes task success rate on $\mathcal{D}_\text{tgt}$ while training at most $P_\text{budget}$ parameters.
+The output is a per-region LoRA rank assignment $k : \{1, \dots, R\} \to \mathbb{Z}_{\geq 0}$, with $k(r) = 0$ a frozen region, that satisfies
+%
+\begin{equation}
+\label{eq:budget-constraint}
+    \sum_{r=1}^{R} k(r)\, c_1(r) \leq P_\text{budget},
+\end{equation}
+%
+where $c_1(r)$ is the parameter cost of one unit of rank in region $r$ (\S\ref{sec:method-allocate}), together with the adapters trained under that assignment.
+
+\paragraph{Adaptation cost}
+To evaluate whether an assignment places capacity where it is needed, we define a per-region reference.
+Let $\theta^{(r)\star}_{\mathcal{T}}$ denote the parameters that region-isolated fine-tuning produces, i.e., fine-tuning region $r$ on $\mathcal{T}$ to convergence while holding all other regions fixed.
+The \emph{per-region adaptation cost} is the normalized parameter displacement this adaptation induces,
+%
+\begin{equation}
+\label{eq:adaptation-cost}
+    \rho(r) = \frac{
+        \bigl\lVert \theta^{(r)\star}_{\mathcal{T}} - \theta^{(r)} \bigr\rVert_2
+    }{
+        \bigl\lVert \theta^{(r)} \bigr\rVert_2
+    } \;\in\; \mathbb{R}_{\geq 0}.
+\end{equation}
+%
+A small $\rho(r)$ indicates that the pretrained parameters of region $r$ already suffice.
+Because $\rho(r)$ depends on the fine-tuning protocol, it is an operational proxy for adaptation demand, and our experiments treat $\{\rho(r)\}_{r=1}^{R}$ as the reference signal for evaluating the diagnostic.
+
+\paragraph{Assumptions}
+Beyond these inputs, we assume access to (i)~the pretrained weights with forward and backward passes and (ii)~a compact reference that the model provider ships with the weights, comprising a small coreset of source observations and their per-region embedding statistics.
+We assume neither knowledge of the shift type at adaptation time nor deployment-time access to source training data beyond that reference.

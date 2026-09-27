@@ -1,0 +1,24 @@
+\begin{table}[tbp]
+    \centering
+    \caption{Diagnostic accuracy across the five architectures with $N = 10$ unlabeled target observations and no fine-tuning. $R^2$ is the pooled fit of predicted scores against measured costs over all conditions, and $\rho_S$ is the median per-cell Spearman correlation. Brackets give the range of each statistic across the five architectures, computed per architecture. Bold marks the best result per column.}
+    \label{tab:diagnostic-aggregate}
+    \scriptsize
+    \setlength{\tabcolsep}{2.8pt}
+    \begin{tabular}{lcc}
+        \toprule
+        \textbf{Diagnostic Variant} & \textbf{Spearman $\rho_S$} & \textbf{$R^2$} \\
+        \midrule
+        \multicolumn{3}{l}{\textit{Na{\"i}ve baselines}} \\
+        Random scores                       & 0.02 [0.01, 0.03] & 0.01 [0.00, 0.01] \\
+        Frobenius norm      & 0.33 [0.29, 0.37] & 0.18 [0.15, 0.21] \\
+        Cosine dist.\ of means & 0.40 [0.36, 0.44] & 0.22 [0.19, 0.25] \\
+        \midrule
+        \multicolumn{3}{l}{\textit{Tier ablations}} \\
+        Tier~1 (CKA $+$ Fisher) & 0.77 [0.71, 0.83] & 0.59 [0.51, 0.66] \\
+        Tier~2 (Grad.\ $+$ MC Drop.) & 0.82 [0.77, 0.88] & 0.68 [0.61, 0.74] \\
+        Uniform blend (no gate) & 0.87 [0.82, 0.92] & 0.78 [0.70, 0.85] \\
+        \midrule
+        \textbf{Two-tier (proposed)}        & \textbf{0.91 [0.86, 0.96]} & \textbf{0.89 [0.80, 0.93]} \\
+        \bottomrule
+    \end{tabular}
+\end{table}

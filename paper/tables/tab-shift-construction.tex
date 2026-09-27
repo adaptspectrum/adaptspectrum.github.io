@@ -1,0 +1,21 @@
+\begin{table}[tbp]
+    \centering
+    \setlength{\abovecaptionskip}{0pt}
+    \setlength{\belowcaptionskip}{2pt}
+    \caption{The five controlled shifts, each modifying one axis of the observation distribution while preserving task semantics.}
+    \label{tab:shift-construction}
+    \scriptsize
+    \renewcommand{\arraystretch}{0.92}
+    \setlength{\tabcolsep}{3pt}
+    \begin{tabular}{@{}l p{\dimexpr\columnwidth-1.75cm\relax}@{}}
+        \toprule
+        \textbf{Shift} & \textbf{Construction} \\
+        \midrule
+        Appearance   & Warm tint, vignette, contrast, desaturation, and Gaussian noise on rendered RGB \\
+        Spatial      & Distractor clutter and partial occlusion of the workspace at scene reset \\
+        Novel Object & Mesh and geometry substitution with new material, color, and reflectance \\
+        Instruction  & LLM rephrasing under semantic equivalence, $10\%$ manually verified \\
+        Combined     & All four perturbations applied jointly \\
+        \bottomrule
+    \end{tabular}
+\end{table}

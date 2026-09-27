@@ -1,0 +1,22 @@
+\begin{table}[tbp]
+    \centering
+    \setlength{\abovecaptionskip}{0pt}
+    \setlength{\belowcaptionskip}{2pt}
+    \caption{Region partitions with approximate parameter counts. AR, Diff., and FM denote autoregressive, diffusion, and flow-matching decoding.}
+    \label{tab:region-partitions}
+    \scriptsize
+    \renewcommand{\arraystretch}{0.92}
+    \setlength{\tabcolsep}{3pt}
+    \resizebox{\columnwidth}{!}{%
+    \begin{tabular}{@{}lcl@{}}
+        \toprule
+        \textbf{Model (Params)} & \textbf{Dec.} & \textbf{Regions} \\
+        \midrule
+        OpenVLA-OFT (7B) & AR (par.) & DINOv2, SigLIP, Proj., LLaMA-e, LLaMA-l, Act.\ Head \\
+        $\pi_0$ (3.3B)   & FM        & SigLIP, Gemma, Act.\ Expert \\
+        SmolVLA (450M)   & FM        & SigLIP, SmolLM2, Proj., Act.\ Expert \\
+        DTP (350M)       & Diff.     & DINOv2, CLIP, Q-Former, Diff.\ Trans. \\
+        Octo (93M)       & Diff.     & Vis.\ Tok., T5 Enc., Transformer, Diff.\ Head \\
+        \bottomrule
+    \end{tabular}}
+\end{table}

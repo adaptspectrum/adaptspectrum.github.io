@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="Not All Layers Need Tuning: diagnosing and directing adaptation in Vision-Language-Action models.">
+  <meta name="keywords" content="VLA, LoRA, Adaptation spectrum, PEFT, Robotics">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Not All Layers Need Tuning</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css?v=17">
+  <link rel="apple-touch-icon" sizes="180x180" href="./static/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="./static/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="./static/images/favicon-16x16.png">
+  <link rel="icon" href="./static/images/favicon.ico">
+  <link rel="manifest" href="./static/images/site.webmanifest">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js?v=17"></script>
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<div class="top-fold">
+<section class="hero" aria-label="Paper title and authors">
+  <div class="hero-body">
+    <div class="container is-max-widescreen">
+      <div class="landing-title has-text-centered">
+        <h1 class="title is-1 publication-title">
+          <span class="title-accent">Not All Layers Need Tuning:</span>
+          <span class="title-rest">Diagnosing and Directing Adaptation in Vision-Language-Action Models</span>
+        </h1>
+        <div class="publication-authors">
+          <span class="author-block">
+            <a href="https://shahramnajamsyed.com/">Shahram Najam Syed</a>,</span>
+          <span class="author-block">
+            <a href="https://arthurjakobsson.com">Arthur Jakobsson</a>,</span>
+          <span class="author-block">
+            <a href="https://www.linkedin.com/in/prayuj-sachdev-4522541ba/">Prayuj Sachdev</a>,</span>
+          <span class="author-block">
+            <a href="https://ichnow.ski/">Jeffrey Ichnowski</a>
+          </span>
+        </div>
+        <div class="publication-authors publication-venue">
+          <span class="author-block">Robotics Institute, Carnegie Mellon University</span>
+        </div>
+        <div class="publication-links" role="navigation" aria-label="Paper links">
+          <span class="link-block">
+            <a href="https://arxiv.org/pdf/2609.18084"
+               class="external-link button is-normal is-rounded is-dark">
+              <span class="icon" aria-hidden="true"><i class="fas fa-file-pdf"></i></span>
+              <span>Paper</span>
+            </a>
+          </span>
+          <span class="link-block">
+            <a href="https://arxiv.org/abs/2609.18084"
+               class="external-link button is-normal is-rounded is-dark">
+              <span class="icon" aria-hidden="true"><i class="ai ai-arxiv"></i></span>
+              <span>arXiv</span>
+            </a>
+          </span>
+          <span class="link-block">
+            <a href="https://momentum-robotics-lab.github.io/"
+               class="external-link button is-normal is-rounded is-dark">
+              <span class="icon" aria-hidden="true"><i class="fas fa-university"></i></span>
+              <span>Lab</span>
+            </a>
+          </span>
+          <span class="link-block">
+            <a href="#BibTeX"
+               class="external-link button is-normal is-rounded is-dark">
+              <span class="icon" aria-hidden="true"><i class="fas fa-quote-right"></i></span>
+              <span>BibTeX</span>
+            </a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero teaser" id="video" aria-label="Adaptation spectrum by shift">
+  <div class="container is-max-widescreen">
+    <div class="hero-body">
+      <div class="shift-picker" role="tablist" aria-label="Select a deployment shift">
+        <button type="button" class="shift-option is-active" role="tab" data-shift="appearance" aria-selected="true">Appearance</button>
+        <button type="button" class="shift-option" role="tab" data-shift="novel" aria-selected="false">Novel object</button>
+        <button type="button" class="shift-option" role="tab" data-shift="instruction" aria-selected="false">Instruction</button>
+        <button type="button" class="shift-option" role="tab" data-shift="combined" aria-selected="false">Combined</button>
+      </div>
+
+      <div class="shift-stage" id="shift-panel" role="tabpanel">
+        <figure class="shift-photo">
+          <div class="shift-photo-media">
+            <div class="shift-photo-label" aria-hidden="true">Scene A</div>
+            <div class="shift-photo-rate" id="shift-rate-a" aria-live="polite">27/30</div>
+            <div class="shift-photo-cmd" id="shift-cmd-a" hidden></div>
+            <img id="shift-photo-a" src="./static/images/shift/hw_appearance_a.jpg"
+                 alt="Scene A for appearance shift." width="720" height="720" loading="eager">
+          </div>
+          <figcaption id="shift-cap-a">Adapted</figcaption>
+        </figure>
+        <figure class="shift-photo">
+          <div class="shift-photo-media">
+            <div class="shift-photo-label scene-b" aria-hidden="true">Scene B</div>
+            <div class="shift-photo-rate" id="shift-rate-b" aria-live="polite">23/30</div>
+            <div class="shift-photo-cmd" id="shift-cmd-b" hidden></div>
+            <img id="shift-photo-b" src="./static/images/shift/hw_appearance_b.jpg"
+                 alt="Scene B for appearance shift." width="720" height="720" loading="eager">
+          </div>
+          <figcaption id="shift-cap-b">Held out</figcaption>
+        </figure>
+
+        <div class="shift-cka" aria-label="OpenVLA-OFT CKA for the selected shift">
+          <figure class="cka-card">
+            <figcaption>OpenVLA-OFT CKA <span>(7B)</span></figcaption>
+            <img id="shift-cka" src="./static/images/cka/openvla_appearance.png"
+                 alt="OpenVLA-OFT CKA for appearance shift." width="270" height="359" loading="eager">
+          </figure>
+          <div class="cka-colorbar-wrap">
+            <span class="cka-scale-hi" aria-hidden="true">higher</span>
+            <img class="cka-colorbar" src="./static/images/cka/colorbar_bar.png"
+                 alt="CKA color scale from low to high similarity." width="40" height="360" loading="eager">
+            <span class="cka-scale-lo" aria-hidden="true">lower &rarr; more updates needed</span>
+          </div>
+          <div class="cka-legend" aria-hidden="true">
+            <span><i class="cka-swatch cka-vis-a"></i><i class="cka-swatch cka-vis-b"></i> vision</span>
+            <span><i class="cka-swatch cka-bridge"></i> bridge</span>
+            <span><i class="cka-swatch cka-lang"></i> language</span>
+            <span><i class="cka-swatch cka-act"></i> action</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<main id="main-content">
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Fine-tuning a Vision-Language-Action (VLA) model for a new deployment environment is
+            expensive, yet most methods apply uniform-capacity adapters to every network region as
+            if every region requires equal adjustment. This paper tests that assumption on five
+            architecturally diverse VLAs (OpenVLA-OFT, &pi;<sub>0</sub>, SmolVLA, DTP, Octo;
+            93M&ndash;7B parameters). Measuring per-region adaptation cost as normalized parameter
+            displacement under region-isolated fine-tuning reveals an
+            <span class="dnerf">adaptation spectrum</span> in which appearance shifts concentrate
+            cost in the vision encoder, instruction shifts in the language backbone, and novel-object
+            shifts in the vision encoder together with the action head, consistently across all five
+            architectures in our experiments.
+          </p>
+          <p>
+            To exploit this structure, we introduce a pipeline that observes, diagnoses, allocates,
+            and adapts. From ten unlabeled target observations and without fine-tuning, the diagnostic
+            estimates per-region cost; the allocator converts those estimates into variable-rank
+            Low-Rank Adaptation (LoRA) adapters under a parameter budget and freezes well-calibrated
+            regions. In our experiments, the diagnostic ranks regions within each deployment at a
+            median Spearman of 0.91, and the allocation matches or exceeds uniform LoRA at every budget
+            we tested on LIBERO and CALVIN. On a physical xArm-7, the pipeline matches full fine-tuning
+            under an instruction-wording shift with 0.04% of its trainable parameters, and on five
+            held-out scenes evaluated without retraining it leads every baseline, with 11&ndash;23
+            successes of 30 rollouts against 8&ndash;18 for the strongest parameter-efficient baseline
+            and 2&ndash;11 for full fine-tuning. These results suggest that adaptation cost in VLAs is
+            structured enough to measure before fine-tuning begins.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section" id="method">
+  <div class="container is-max-widescreen">
+    <h2 class="title is-3 has-text-centered">Method</h2>
+    <div class="content has-text-justified method-copy">
+      <p>
+        The pipeline runs four stages in order. The observe stage collects a small set of unlabeled
+        target observations at the deployment site. The diagnose stage maps the frozen policy and
+        those observations to per-region scores <em>D</em>(<em>r</em>) &isin; (0,&nbsp;1] using a
+        comparison tier against a cached source reference and a reference-free tier, blended by a
+        per-region Fr&eacute;chet gate. The allocate stage converts the scores into a LoRA rank
+        assignment <em>k</em>(<em>r</em>) under a trainable-parameter budget, proportional to
+        <em>D</em>(<em>r</em>) and zero below a freezing threshold. The adapt stage trains those
+        adapters on a small demonstration set. Each stage runs once per deployment, and only the
+        adapt stage updates parameters.
+      </p>
+      <p>
+        We partition each VLA along its native module boundaries into functional regions (vision
+        encoder, language backbone, cross-modal projectors, action head, and related modules).
+        Adaptation cost is measured, and adapters are attached, per region. The reference cost used
+        to evaluate the diagnostic is the per-region adaptation cost
+        &rho;(<em>r</em>), the normalized parameter displacement induced by region-isolated
+        fine-tuning on the target demonstrations while holding all other regions fixed. A small
+        &rho;(<em>r</em>) indicates that the pretrained parameters of region <em>r</em> already
+        suffice for the shift. The diagnostic is trained to recover the rank order of
+        {&rho;(<em>r</em>)} within a deployment from the unlabeled observations alone.
+      </p>
+      <p>
+        When the domain gap is small, the comparison tier scores representational shift with
+        Centered Kernel Alignment (CKA) against the cached source activations, weighted by
+        parameter sensitivity. When the gap is large, a reference-free tier profiles size-normalized
+        gradient norms of a label-free surrogate loss, and, for dropout-trained models, Monte Carlo
+        Dropout activation variance. The Fr&eacute;chet gate decides how much each region trusts
+        each tier. The allocator then spends the budget where <em>D</em>(<em>r</em>) is high and
+        freezes regions that appear well calibrated.
+      </p>
+    </div>
+    <img class="figure-img" src="./static/images/interpretability_figure1.png"
+         alt="Pipeline overview: observe, diagnose, allocate, and adapt.">
+    <p class="section-note">
+      Fig.&nbsp;1. Observe &rarr; diagnose &rarr; allocate &rarr; adapt. The diagnostic estimates per-region
+      cost from unlabeled target observations; the allocator places variable-rank LoRA under a budget.
+    </p>
+  </div>
+</section>
+
+
+<section class="section" id="spectrum">
+  <div class="container is-max-widescreen">
+    <h2 class="title is-3 has-text-centered">Adaptation spectrum</h2>
+    <p class="section-note">
+      Heatmaps of per-region adaptation cost &rho;(<em>r</em>), the normalized parameter displacement
+      under region-isolated fine-tuning. Appearance shifts concentrate cost in the vision encoder,
+      instruction shifts in the language backbone, and novel-object shifts in vision together with
+      the action head, consistently across architectures.
+    </p>
+    <img class="figure-img" src="./static/images/spectrum_heatmaps.png"
+         alt="Heatmaps of per-region adaptation cost rho(r) across five VLAs and five shift types.">
+    <div class="shift-grid" style="margin-top: var(--space-md);">
+      <figure class="shift-card">
+        <img src="./static/images/scene_appearance.png" alt="Appearance shift scene.">
+        <figcaption>Appearance</figcaption>
+      </figure>
+      <figure class="shift-card">
+        <img src="./static/images/scene_spatial.png" alt="Spatial shift scene.">
+        <figcaption>Spatial</figcaption>
+      </figure>
+      <figure class="shift-card">
+        <img src="./static/images/scene_instruction.png" alt="Instruction shift: reworded language command.">
+        <figcaption>Instruction · reworded command</figcaption>
+      </figure>
+      <figure class="shift-card">
+        <img src="./static/images/scene_novel.png" alt="Novel object shift scene.">
+        <figcaption>Novel object</figcaption>
+      </figure>
+      <figure class="shift-card">
+        <img src="./static/images/scene_combined.png" alt="Combined shift scene.">
+        <figcaption>Combined</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+
+<section class="section" id="sim-results">
+  <div class="container is-max-widescreen">
+    <h2 class="title is-3 has-text-centered">Simulation rollouts</h2>
+    <p class="section-note">
+      Adaptive allocation after diagnosis on OpenVLA-OFT under controlled deployment shifts.
+    </p>
+    <div id="results-carousel" class="carousel results-carousel">
+      <div class="item">
+        <video autoplay muted loop playsinline controls src="./static/videos/sim_id.mp4"></video>
+        <p class="slide-caption"><span class="badge-ok">In distribution</span> <strong>Source rollout</strong> Pick up the cream cheese and put it in the tray.</p>
+      </div>
+      <div class="item">
+        <video autoplay muted loop playsinline controls src="./static/videos/sim_appearance.mp4"></video>
+        <p class="slide-caption"><span class="badge-ok">Adaptive</span> <strong>Appearance</strong> Warm tint, vignette, and noise; capacity concentrates in vision.</p>
+      </div>
+      <div class="item">
+        <video autoplay muted loop playsinline controls src="./static/videos/sim_spatial.mp4"></video>
+        <p class="slide-caption"><span class="badge-ok">Adaptive</span> <strong>Spatial</strong> Object offset in clutter.</p>
+      </div>
+      <div class="item">
+        <video autoplay muted loop playsinline controls src="./static/videos/sim_instruction.mp4"></video>
+        <p class="slide-caption"><span class="badge-ok">Adaptive</span> <strong>Instruction</strong> Source “Pick up the cream cheese and put it in the tray.” &rarr; LLM rephrase (same meaning); capacity concentrates in language.</p>
+      </div>
+      <div class="item">
+        <video autoplay muted loop playsinline controls src="./static/videos/sim_novel.mp4"></video>
+        <p class="slide-caption"><span class="badge-ok">Adaptive</span> <strong>Novel object</strong> New geometry; vision and action head share the budget.</p>
+      </div>
+      <div class="item">
+        <video autoplay muted loop playsinline controls src="./static/videos/sim_combined.mp4"></video>
+        <p class="slide-caption"><span class="badge-ok">Adaptive</span> <strong>Combined</strong> Multiple shifts at once.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section" id="hardware">
+  <div class="container is-max-widescreen">
+    <h2 class="title is-3 has-text-centered">Physical robot</h2>
+    <p class="section-note hw-note" id="hw-note">
+      Appearance shift (lighting, textures). Adapt on Scene A, evaluate held-out Scene B without retraining · 0.493% of parameters.
+    </p>
+    <div class="task-picker" role="tablist" aria-label="Select a physical shift">
+      <button type="button" class="task-option is-active" role="tab" data-task="appearance" aria-selected="true">Appearance</button>
+      <button type="button" class="task-option" role="tab" data-task="novel" aria-selected="false">Novel object</button>
+      <button type="button" class="task-option" role="tab" data-task="affordance" aria-selected="false">Affordance</button>
+      <button type="button" class="task-option" role="tab" data-task="mixed" aria-selected="false">Mixed</button>
+    </div>
+    <div class="task-stage scene-pair">
+      <figure class="task-pane">
+        <div class="task-pane-label" aria-hidden="true">Scene A</div>
+        <div class="task-rate" id="hw-rate-a" aria-live="polite">27/30</div>
+        <img id="hw-scene-a" src="./static/images/hw_appearance_a.jpg"
+             alt="Scene A for the selected physical shift.">
+      </figure>
+      <figure class="task-pane">
+        <div class="task-pane-label scene-b" aria-hidden="true">Scene B</div>
+        <div class="task-rate" id="hw-rate-b" aria-live="polite">23/30</div>
+        <video id="hw-scene-b" autoplay muted loop playsinline controls
+               poster="./static/images/hw_appearance_b.jpg"
+               aria-label="Scene B rollout for the selected physical shift"
+               src="./static/videos/hw_appearance.mp4"></video>
+      </figure>
+    </div>
+  </div>
+</section>
+
+
+<section class="section" id="results">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Results</h2>
+    <div class="results-strip">
+      <div class="result-stat">
+        <div class="result-num">0.91</div>
+        <div class="result-label">median Spearman<br>diagnostic ranking</div>
+      </div>
+      <div class="result-stat">
+        <div class="result-num">5 VLAs</div>
+        <div class="result-label">93M&ndash;7B, three<br>decoding paradigms</div>
+      </div>
+      <div class="result-stat">
+        <div class="result-num">0.04%</div>
+        <div class="result-label">params vs full FT<br>on instruction shift</div>
+      </div>
+      <div class="result-stat">
+        <div class="result-num">11&ndash;23/30</div>
+        <div class="result-label">held-out Scene B<br>leads every baseline</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>@article{syed2026adaptspectrum,
+  title   = {Not All Layers Need Tuning: Diagnosing and Directing Adaptation in Vision-Language-Action Models},
+  author  = {Syed, Shahram Najam and Jakobsson, Arthur and Sachdev, Prayuj and Ichnowski, Jeffrey},
+  journal = {arXiv preprint arXiv:2609.18084},
+  year    = {2026}
+}</code></pre>
+  </div>
+</section>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="content has-text-centered">
+      <a class="icon-link" href="https://arxiv.org/pdf/2609.18084" aria-label="Download paper PDF">
+        <i class="fas fa-file-pdf" aria-hidden="true"></i>
+      </a>
+      <a class="icon-link" href="https://github.com/adaptspectrum/adaptspectrum.github.io" aria-label="GitHub repository">
+        <i class="fab fa-github" aria-hidden="true"></i>
+      </a>
+    </div>
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+            This website is licensed under a
+            <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+          </p>
+          <p>
+            Page design adapted from the
+            <a href="https://nerfies.github.io">Nerfies</a>
+            <a href="https://github.com/nerfies/nerfies.github.io">source code</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
